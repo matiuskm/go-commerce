@@ -34,9 +34,9 @@ func main() {
 		// User routes
 		auth.GET("/my/profile", handlers.GetUserProfileHandler)
 		auth.PATCH("/my/profile", handlers.UpdateUserProfileHandler)
-		auth.GET("/my/orders", handlers.GetUserOrdersHandler)
 		auth.POST("/my/cart", handlers.SaveCartHandler)
 		auth.GET("/my/cart", handlers.GetSavedCartHandler)
+		auth.GET("/my/orders", handlers.GetOrderHistoryHandler)
 		auth.POST("/checkout", handlers.CheckoutHandler)
 
 		// Admin routes

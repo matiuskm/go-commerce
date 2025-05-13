@@ -86,5 +86,3 @@ func UpdateUserProfileHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User profile updated successfully"})
 }
-
-func GetUserOrdersHandler(c *gin.Context) {}
