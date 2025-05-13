@@ -34,7 +34,7 @@ func SaveCartHandler(c *gin.Context) {
 
 	var cart models.Cart
 	db.DB.Where("user_id = ?", userID).FirstOrInit(&cart)
-	cart.UserID = &userID
+	cart.UserID = userID
 	db.DB.Save(&cart)
 
 	// clear old items

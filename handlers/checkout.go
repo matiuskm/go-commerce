@@ -70,13 +70,7 @@ func CheckoutHandler(c *gin.Context) {
 	}
 
 	// clear cart
-	if err := tx.Where("CartID =?", cart.ID).Delete(&models.CartItem{}).Error; err!= nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clear cart items"})
-		return
-	}
-
-	if err := tx.Delete(&cart).Error; err!= nil {
+	if err := tx.Unscoped().Delete(&cart).Error; err!= nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clear cart"})
 		return
