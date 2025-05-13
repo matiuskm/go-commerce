@@ -37,6 +37,7 @@ func main() {
 		auth.GET("/my/orders", handlers.GetUserOrdersHandler)
 		auth.POST("/my/cart", handlers.SaveCartHandler)
 		auth.GET("/my/cart", handlers.GetSavedCartHandler)
+		auth.POST("/checkout", handlers.CheckoutHandler)
 
 		// Admin routes
 		admin := auth.Group("/admin")
