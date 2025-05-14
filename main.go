@@ -44,9 +44,11 @@ func main() {
 		admin := auth.Group("/admin")
 		admin.Use(middlewares.AdminMiddleware())
 		{
-			admin.GET("/users", handlers.AdminGetUsersHandler)
-			admin.GET("/users/:id", handlers.AdminGetUsersHandler)
-			admin.DELETE("/users/:id", handlers.AdminGetUsersHandler)
+			admin.GET("/users", handlers.AdminListUsersHandler)
+			admin.GET("/users/:id", handlers.AdminGetUserHandler)
+			admin.PUT("/users/:id", handlers.AdminUpdateUserHandler)
+			admin.PATCH("/users/:id/role", handlers.AdminUpdateUserRoleHandler)
+			admin.DELETE("/users/:id", handlers.AdminDeleteUserHandler)
 
 			admin.GET("/products", handlers.AdminListProductHandler)
 			admin.POST("/products", handlers.AdminCreateProductHandler)

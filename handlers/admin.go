@@ -13,7 +13,77 @@ type StatusUpdatePayload struct {
 	Status string `json:"status"`
 }
 
-func AdminGetUsersHandler(c *gin.Context) {}
+func AdminListUsersHandler(c *gin.Context) {
+	var users []models.User
+	if err := db.DB.Find(&users).Error; err!= nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Users not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": users})
+}
+
+func AdminGetUserHandler(c *gin.Context) {
+	id := c.Param("id")
+
+	var user models.User
+	if err := db.DB.First(&user, id).Error; err!= nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func AdminUpdateUserHandler(c *gin.Context) {
+	var req models.User
+	if err := c.ShouldBindJSON(&req); err!= nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id := c.Param("id")
+	if err := db.DB.Where("id =?", id).Updates(&req).Error; err!= nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully", "user": req})
+}
+
+func AdminDeleteUserHandler(c *gin.Context) {
+	id := c.Param("id")
+	var user models.User
+	if err := db.DB.Where("id =?", id).Delete(&user).Error; err!= nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete user"})
+		return
+	}
+	c.JSON(http.StatusNoContent, gin.H{"message": "User deleted successfully"})
+}
+
+func AdminUpdateUserRoleHandler(c *gin.Context) {
+	var payload struct {
+		Role string `json:"role"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil || (strings.ToLower(payload.Role) != "admin" && strings.ToLower(payload.Role) != "user") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role"})
+		return
+	}
+
+	userID := c.Param("id")
+	var user models.User
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	user.Role = payload.Role
+	if err := db.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update role"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "user role updated"})
+}
+
 func AdminListOrdersHandler(c *gin.Context) {
 	var orders []models.Order
 	if err := db.DB.Preload("User").Preload("Items.Product").Find(&orders).Error; err != nil {

@@ -1,18 +1,36 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/matiuskm/go-commerce/db"
+	"github.com/matiuskm/go-commerce/models"
 )
 
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		roleVal, exists := c.Get("role")
-		if !exists || roleVal != "admin"  {
-			c.AbortWithStatusJSON(401, gin.H{
-				"error": "Unauthorized",
-			})
+		userIDAny, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.Abort()
 			return
 		}
+		userID := userIDAny.(uint)
+
+		var user models.User
+		if err := db.DB.First(&user, userID).Error; err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			c.Abort()
+			return
+		}
+
+		if user.Role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }
