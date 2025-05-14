@@ -8,3 +8,8 @@ type Cart struct {
 	User *User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Items []CartItem `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
+
+type CartResponse struct {
+	ID 		uint 				`json:"id"`
+	Items  	[]CartItemResponse 	`json:"items"`
+}

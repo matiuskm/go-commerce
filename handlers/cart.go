@@ -12,12 +12,6 @@ type CartPayload struct {
 	Items []models.CartItem `json:"items"`
 }
 
-type SimplifiedCartItem struct {
-	ProductID uint            `json:"product_id"`
-	Product   models.Product  `json:"product"`
-	Quantity  int             `json:"quantity"`
-}
-
 func SaveCartHandler(c *gin.Context) {
 	userIDAny, exists := c.Get("user_id")
 	if !exists {
@@ -68,18 +62,27 @@ func GetSavedCartHandler(c *gin.Context) {
 	
 	var cart models.Cart
 	if err := db.DB.Preload("Items.Product").Where("user_id =?", userID).First(&cart).Error; err!= nil {
-		c.JSON(http.StatusNotFound, gin.H{"items": []SimplifiedCartItem{}})
+		c.JSON(http.StatusNotFound, gin.H{"items": []models.CartItemResponse{}})
 		return
 	}
 
-	simplified := []SimplifiedCartItem{}
+	response := models.CartResponse{
+		ID: cart.ID,
+	}
+
 	for _, item := range cart.Items {
-		simplified = append(simplified, SimplifiedCartItem{
-			ProductID: item.ProductID,
-			Product:   item.Product,
-			Quantity:  item.Qty,
+		simpleProduct := models.ProductResponse{
+			ID: item.Product.ID,
+			Name: item.Product.Name,
+			Price: item.Product.Price,
+			Description: item.Product.Description,
+			Stock: item.Product.Stock,
+		}
+		response.Items = append(response.Items, models.CartItemResponse{
+			Product:   simpleProduct,
+			Qty:  item.Qty,
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"items": simplified})
+	c.JSON(http.StatusOK, gin.H{"cart": response})
 }

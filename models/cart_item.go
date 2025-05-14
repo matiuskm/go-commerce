@@ -9,3 +9,8 @@ type CartItem struct {
 	Product Product `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Qty int `json:"quantity"`
 }
+
+type CartItemResponse struct {
+	Product		ProductResponse		`json:"product"`
+	Qty			int			`json:"quantity"`
+}

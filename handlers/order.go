@@ -22,7 +22,34 @@ func GetOrderHistoryHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"orders": orders})
+	var response []models.OrderResponse
+	for _, o := range orders {
+		order := models.OrderResponse{
+			ID: o.ID,
+			OrderNum: o.OrderNum,
+			Status: o.Status,
+			Total: o.Total,
+		}
+
+		for _, item := range o.Items {
+			simpleProduct := models.ProductResponse{
+				ID: item.Product.ID,
+				Name: item.Product.Name,
+				Price: item.Product.Price,
+				Description: item.Product.Description,
+				Stock: item.Product.Stock,
+			}
+	
+			order.Items = append(order.Items, models.OrderItemResponse{
+				Product: simpleProduct,
+				Quantity: item.Quantity,
+			})
+		}
+
+		response = append(response, order)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"orders": response})
 }
 
 func GetOrderDetailHandler(c *gin.Context) {
@@ -41,5 +68,28 @@ func GetOrderDetailHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"order": order})
+	response := models.OrderResponse{
+		ID: order.ID,
+		OrderNum: order.OrderNum,
+		Status: order.Status,
+		Total: order.Total,
+	}
+
+	for _, item := range order.Items {
+		simpleProduct := models.ProductResponse{
+			ID: item.Product.ID,
+			Name: item.Product.Name,
+			Price: item.Product.Price,
+			Description: item.Product.Description,
+			Stock: item.Product.Stock,
+		}
+
+		response.Items = append(response.Items, models.OrderItemResponse{
+			Product: simpleProduct,
+			Quantity: item.Quantity,
+		})
+	}
+
+
+	c.JSON(http.StatusOK, gin.H{"order": response})
 }

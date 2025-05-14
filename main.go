@@ -37,7 +37,7 @@ func main() {
 		auth.POST("/my/cart", handlers.SaveCartHandler)
 		auth.GET("/my/cart", handlers.GetSavedCartHandler)
 		auth.GET("/my/orders", handlers.GetOrderHistoryHandler)
-		auth.GET("my/order/:id", handlers.GetOrderDetailHandler)
+		auth.GET("my/orders/:id", handlers.GetOrderDetailHandler)
 		auth.POST("/checkout", handlers.CheckoutHandler)
 
 		// Admin routes
@@ -45,10 +45,17 @@ func main() {
 		admin.Use(middlewares.AdminMiddleware())
 		{
 			admin.GET("/users", handlers.AdminGetUsersHandler)
-			admin.GET("/orders", handlers.AdminGetOrdersHandler)
+			admin.GET("/users/:id", handlers.AdminGetUsersHandler)
+			admin.DELETE("/users/:id", handlers.AdminGetUsersHandler)
+
+			admin.GET("/products", handlers.AdminListProductHandler)
 			admin.POST("/products", handlers.AdminCreateProductHandler)
 			admin.PATCH("/products/:id", handlers.AdminUpdateProductHandler)
 			admin.DELETE("/products/:id", handlers.AdminDeleteProductHandler)
+			
+			admin.GET("/orders", handlers.AdminListOrdersHandler)
+			admin.GET("/orders/:id", handlers.AdminGetOrder)
+			admin.PUT("/orders/:id/status", handlers.AdminUpdateOrderStatus)
 		}
 	}
 
