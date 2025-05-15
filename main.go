@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/matiuskm/go-commerce/config"
 	"github.com/matiuskm/go-commerce/db"
 
@@ -22,7 +23,7 @@ func main() {
 
 	// set cors
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:5173"},
+		AllowOrigins: strings.Split(config.GetEnv("CORS_ORIGINS", "https://go-commerce-fe.vercel.app,http://localhost:5173"), ","),
 		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{"Content-Length"},
