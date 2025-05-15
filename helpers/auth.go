@@ -1,21 +1,21 @@
 package helpers
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/matiuskm/go-commerce/config"
 	"github.com/matiuskm/go-commerce/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte(config.GetEnv("JWT_SECRET", "abc123"))
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type JWTClaims struct {
-	UserID uint   `json:"user_id"`
-	Role   string `json:"role"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
+	UserID   uint   `json:"user_id"`
+	Role     string `json:"role"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
@@ -32,10 +32,10 @@ func CheckPasswordHash(password, hash string) bool {
 
 func GenerateJWT(user models.User) (string, error) {
 	claims := &JWTClaims{
-		UserID: user.ID,
-		Role:   user.Role,
-		Name:   user.Name,
-		Email:  user.Email,
+		UserID:   user.ID,
+		Role:     user.Role,
+		Name:     user.Name,
+		Email:    user.Email,
 		Username: user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(72 * time.Hour)),

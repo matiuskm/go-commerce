@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-contrib/cors"
@@ -23,9 +24,9 @@ func main() {
 
 	// set cors
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: strings.Split(config.GetEnv("CORS_ORIGINS", "https://go-commerce-fe.vercel.app,http://localhost:5173"), ","),
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+		AllowOrigins:  strings.Split(os.Getenv("CORS_ORIGINS"), ","),
+		AllowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{"Content-Length"},
 	}))
 
@@ -39,7 +40,7 @@ func main() {
 
 	// Protected routes
 	auth := r.Group("/")
-	auth.Use(middlewares.AuthMiddleware()) 
+	auth.Use(middlewares.AuthMiddleware())
 	{
 		// User routes
 		auth.GET("/my/profile", handlers.GetUserProfileHandler)
@@ -66,7 +67,7 @@ func main() {
 			admin.POST("/products", handlers.AdminCreateProductHandler)
 			admin.PATCH("/products/:id", handlers.AdminUpdateProductHandler)
 			admin.DELETE("/products/:id", handlers.AdminDeleteProductHandler)
-			
+
 			admin.GET("/orders", handlers.AdminListOrdersHandler)
 			admin.GET("/orders/:id", handlers.AdminGetOrder)
 			admin.PUT("/orders/:id/status", handlers.AdminUpdateOrderStatus)
@@ -74,6 +75,6 @@ func main() {
 	}
 
 	log.Println("Server started on :8080")
-	port := config.GetEnv("PORT", "8080")
+	port := os.Getenv("PORT")
 	http.ListenAndServe(":"+port, r)
 }
