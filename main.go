@@ -22,7 +22,14 @@ func main() {
 	r := gin.Default()
 
 	// set cors
-	corsOrigins := strings.Split(os.Getenv("CORS_ORIGINS"), ",")
+	originEnv := os.Getenv("CORS_ORIGINS")
+	log.Println("Loaded CORS_ORIGINS:", originEnv)
+
+	if originEnv == "" {
+		log.Fatal("CORS_ORIGINS env var is required")
+	}
+
+	corsOrigins := strings.Split(originEnv, ",")
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:  corsOrigins,
 		AllowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
