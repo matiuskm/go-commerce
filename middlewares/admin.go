@@ -10,7 +10,7 @@ import (
 
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDAny, exists := c.Get("userID")
+		userIDAny, exists := c.Get("user_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()

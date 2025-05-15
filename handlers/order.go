@@ -29,6 +29,7 @@ func GetOrderHistoryHandler(c *gin.Context) {
 			OrderNum: o.OrderNum,
 			Status: o.Status,
 			Total: o.Total,
+			CreatedAt: o.CreatedAt.Format("2006-01-02 15:04:05"),
 		}
 
 		for _, item := range o.Items {
@@ -73,6 +74,7 @@ func GetOrderDetailHandler(c *gin.Context) {
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
+		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	for _, item := range order.Items {

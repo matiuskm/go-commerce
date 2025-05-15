@@ -91,13 +91,15 @@ func AdminListOrdersHandler(c *gin.Context) {
 		return
 	}
 
-	responses := []models.OrderResponse{}
+	responses := []models.AdminOrderResponse{}
 	for _, order := range orders {
-		orderResponse := models.OrderResponse{
+		orderResponse := models.AdminOrderResponse{
 			ID: order.ID,
 			OrderNum: order.OrderNum,
 			Status: order.Status,
 			Total: order.Total,
+			CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+			User: order.User,
 		}
 
 		for _, item := range order.Items {
@@ -129,11 +131,13 @@ func AdminGetOrder(c *gin.Context) {
 		return
 	}
 
-	orderResponse := models.OrderResponse{
+	orderResponse := models.AdminOrderResponse{
 		ID: order.ID,
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
+		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+		User: order.User,
 	}
 
 	for _, item := range order.Items {
@@ -183,11 +187,13 @@ func AdminUpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
-	orderResponse := models.OrderResponse{
+	orderResponse := models.AdminOrderResponse{
 		ID: order.ID,
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
+		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+		User: order.User,
 	}
 
 	for _, item := range order.Items {

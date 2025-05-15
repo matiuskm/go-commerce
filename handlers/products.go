@@ -10,7 +10,7 @@ import (
 
 func GetAllProductsHandler(c *gin.Context) {
 	var products []models.Product
-	if err := db.DB.Find(&products).Error; err != nil {
+	if err := db.DB.Order("ID asc").Find(&products).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch products"})
 		return
 	}

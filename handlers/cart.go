@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/matiuskm/go-commerce/db"
@@ -21,7 +22,7 @@ func SaveCartHandler(c *gin.Context) {
 	userID := userIDAny.(uint)
 
 	var payload CartPayload
-	if err := c.ShouldBindJSON(&payload); err!= nil {
+	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -31,20 +32,22 @@ func SaveCartHandler(c *gin.Context) {
 	cart.UserID = userID
 	db.DB.Save(&cart)
 
-	// clear old items
-	db.DB.Where("cart_id =?", cart.ID).Delete(&models.CartItem{})
+	// DELETE ALL existing cart items (REPLACE MODE)
+	db.DB.Where("cart_id = ?", cart.ID).Unscoped().Delete(&models.CartItem{})
 
-	// Deduplicate items based on ProductID
+	// Deduplicate + filter qty <= 0
 	mergedItems := map[uint]int{}
 	for _, item := range payload.Items {
-		mergedItems[item.ProductID] += item.Qty
+		if item.Qty > 0 {
+			mergedItems[item.ProductID] += item.Qty
+		}
 	}
 
 	for productID, quantity := range mergedItems {
 		item := models.CartItem{
 			CartID:    cart.ID,
 			ProductID: productID,
-			Qty:  quantity,
+			Qty:       quantity,
 		}
 		db.DB.Create(&item)
 	}
@@ -85,4 +88,33 @@ func GetSavedCartHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"cart": response})
+}
+
+func RemoveCartItemHandler(c *gin.Context) {
+	userIDAny, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+	userID := userIDAny.(uint)
+
+	productIDStr := c.Param("productID")
+	productID, err := strconv.Atoi(productIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product ID"})
+		return
+	}
+
+	var cart models.Cart
+	if err := db.DB.Where("user_id =?", userID).First(&cart).Error; err!= nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cart not found"})
+		return
+	}
+
+	if err := db.DB.Where("cart_id =? AND product_id =?", cart.ID, productID).Unscoped().Delete(&models.CartItem{}).Error; err!= nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Item removed"})
 }

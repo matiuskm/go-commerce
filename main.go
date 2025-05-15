@@ -45,6 +45,7 @@ func main() {
 		auth.PATCH("/my/profile", handlers.UpdateUserProfileHandler)
 		auth.POST("/my/cart", handlers.SaveCartHandler)
 		auth.GET("/my/cart", handlers.GetSavedCartHandler)
+		auth.DELETE("/my/cart/:productID", handlers.RemoveCartItemHandler)
 		auth.GET("/my/orders", handlers.GetOrderHistoryHandler)
 		auth.GET("my/orders/:id", handlers.GetOrderDetailHandler)
 		auth.POST("/checkout", handlers.CheckoutHandler)
