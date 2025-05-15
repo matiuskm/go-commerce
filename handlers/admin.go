@@ -86,7 +86,7 @@ func AdminUpdateUserRoleHandler(c *gin.Context) {
 
 func AdminListOrdersHandler(c *gin.Context) {
 	var orders []models.Order
-	if err := db.DB.Preload("User").Preload("Items.Product").Find(&orders).Error; err != nil {
+	if err := db.DB.Preload("User").Preload("Items.Product").Order("ID desc").Find(&orders).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Orders not found"})
 		return
 	}
@@ -216,11 +216,29 @@ func AdminUpdateOrderStatus(c *gin.Context) {
 
 func AdminListProductHandler(c *gin.Context) {
 	var products []models.Product
-	if err := db.DB.Find(&products).Error; err != nil {
+	if err := db.DB.Order("ID asc").Find(&products).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Products not found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"products": products})
+}
+
+func AdminGetProductHandler(c *gin.Context) {
+	id := c.Param("id")
+	var product models.Product
+	if err := db.DB.First(&product, id).Error; err!= nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+	response := models.ProductResponse{
+		ID: product.ID,
+		Name: product.Name,
+		Price: product.Price,
+		Description: product.Description,
+		Stock: product.Stock,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"product": response})
 }
 
 func AdminCreateProductHandler(c *gin.Context) {

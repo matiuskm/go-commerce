@@ -61,6 +61,7 @@ func main() {
 			admin.DELETE("/users/:id", handlers.AdminDeleteUserHandler)
 
 			admin.GET("/products", handlers.AdminListProductHandler)
+			admin.GET("/products/:id", handlers.AdminGetProductHandler)
 			admin.POST("/products", handlers.AdminCreateProductHandler)
 			admin.PATCH("/products/:id", handlers.AdminUpdateProductHandler)
 			admin.DELETE("/products/:id", handlers.AdminDeleteProductHandler)
@@ -72,5 +73,6 @@ func main() {
 	}
 
 	log.Println("Server started on :8080")
-	http.ListenAndServe(":8080", r)
+	port := config.GetEnv("PORT", "8080")
+	http.ListenAndServe(":"+port, r)
 }

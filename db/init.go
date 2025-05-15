@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/matiuskm/go-commerce/config"
@@ -12,7 +13,14 @@ import (
 var DB *gorm.DB
 
 func Init() {
-	dsn := config.GetEnv("DB_DSN", "")
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		config.GetEnv("DB_HOST", "localhost"),
+		config.GetEnv("DB_USER", ""),
+		config.GetEnv("DB_PASSWORD", ""),
+		config.GetEnv("DB_NAME", "ecommerce"),
+		config.GetEnv("DB_PORT", "5432"),
+	  )
 	if dsn == "" {
 		log.Fatal("DB_DSN is not set")
 	}

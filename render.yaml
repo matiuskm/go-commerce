@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: go-commerce-api
+    env: go
+    plan: free
+    buildCommand: go build -o server main.go
+    startCommand: ./server
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: go-commerce-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: go-commerce-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: go-commerce-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: go-commerce-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: go-commerce-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: go-commerce-db
+    plan: free
