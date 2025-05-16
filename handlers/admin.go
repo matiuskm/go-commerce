@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/matiuskm/go-commerce/db"
 	"github.com/matiuskm/go-commerce/models"
 )
@@ -236,6 +240,7 @@ func AdminGetProductHandler(c *gin.Context) {
 		Price: product.Price,
 		Description: product.Description,
 		Stock: product.Stock,
+		ImageURL: product.ImageURL,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"product": response})
@@ -277,4 +282,35 @@ func AdminDeleteProductHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusNoContent, gin.H{"message": "Product deleted successfully"})
+}
+
+func AdminUploadImageHandler(c *gin.Context) {
+	id := c.Param("id")
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "image is required"})
+		return
+	}
+
+	_ = os.MkdirAll("uploads", os.ModePerm)
+
+	// rename + save file
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("uploads/%s%s", uuid.New().String(), ext)
+	if err := c.SaveUploadedFile(file, filename); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
+		return
+	}
+
+	// update product image URL
+	var product models.Product
+	if err := db.DB.First(&product, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+	product.ImageURL = filename
+	db.DB.Save(&product)
+
+	c.JSON(http.StatusOK, gin.H{"message": "image uploaded", "image_url": filename})
 }

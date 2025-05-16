@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/matiuskm/go-commerce/config"
 	"github.com/matiuskm/go-commerce/db"
 
 	"github.com/matiuskm/go-commerce/handlers"
@@ -15,7 +16,9 @@ import (
 )
 
 func main() {
-	// config.LoadEnv()
+	if env := os.Getenv("ENV"); env != "" && env == "development" {
+		config.LoadEnv()
+	}
 
 	db.Init()
 
@@ -36,6 +39,8 @@ func main() {
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{"Content-Length"},
 	}))
+
+	r.Static("/uploads", "./uploads")
 
 	// Public routes
 	r.GET("/", handlers.HomeHandler)
@@ -74,13 +79,15 @@ func main() {
 			admin.POST("/products", handlers.AdminCreateProductHandler)
 			admin.PATCH("/products/:id", handlers.AdminUpdateProductHandler)
 			admin.DELETE("/products/:id", handlers.AdminDeleteProductHandler)
+			admin.POST("/products/:id/image", handlers.AdminUploadImageHandler)
+
 
 			admin.GET("/orders", handlers.AdminListOrdersHandler)
 			admin.GET("/orders/:id", handlers.AdminGetOrder)
 			admin.PUT("/orders/:id/status", handlers.AdminUpdateOrderStatus)
 		}
 	}
-
+ 
 	log.Println("Server started on :8080")
 	port := os.Getenv("PORT")
 	http.ListenAndServe(":"+port, r)

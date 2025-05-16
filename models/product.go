@@ -8,6 +8,7 @@ type Product struct {
 	Description string  `gorm:"not null" json:"description"`
 	Price       int 	`gorm:"not null" json:"price"`
 	Stock       int  	`gorm:"not null" json:"stock"`
+	ImageURL    string  `json:"image_url"`
 }
 
 type ProductResponse struct {
@@ -16,4 +17,5 @@ type ProductResponse struct {
 	Description string  `json:"description"`
 	Price       int 	`json:"price"`
 	Stock       int  	`json:"stock"`
+	ImageURL    string  `json:"image_url"`
 }
