@@ -1,9 +1,15 @@
 package helpers
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
+	"mime/multipart"
+	"os"
 	"time"
+
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 var letters = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -20,4 +26,25 @@ func GenerateOrderNumber() string {
 	datePart := time.Now().Format("20060102")
 	randomPart := generateRandomString(6)
 	return fmt.Sprintf("ORD-%s-%s", datePart, randomPart)
+}
+
+func UploadToCloudinary(file multipart.File, filename string) (string, error) {
+    cld, err := cloudinary.NewFromParams(
+        os.Getenv("CLOUDINARY_CLOUD_NAME"),
+        os.Getenv("CLOUDINARY_API_KEY"),
+        os.Getenv("CLOUDINARY_API_SECRET"),
+    )
+    if err != nil {
+        return "", err
+    }
+
+    uploadRes, err := cld.Upload.Upload(context.Background(), file, uploader.UploadParams{
+        PublicID: "product_" + filename,
+        Folder:   "go-commerce",
+    })
+    if err != nil {
+        return "", err
+    }
+
+    return uploadRes.SecureURL, nil
 }

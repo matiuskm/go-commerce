@@ -30,8 +30,14 @@ services:
           property: password
       - key: JWT_SECRET
         generateValue: true
-      -key: CORS_ORIGINS
+      - key: CORS_ORIGINS
         value: https://go-commerce-fe.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dqgfibxzy
+      - key: CLOUDINARY_API_KEY
+        value: 295954467238744
+      - key: CLOUDINARY_API_SECRET
+        value: IPCvV_T9rhJ6xSWuJHv8YFHfaKA
 
 databases:
   - name: go-commerce-db
