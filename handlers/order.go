@@ -64,9 +64,20 @@ func GetOrderDetailHandler(c *gin.Context) {
 	orderID := c.Param("id")
 	
 	var order models.Order
-	if err := db.DB.Preload("Items.Product").Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+	if err := db.DB.
+		Preload("Address").
+		Preload("Items.Product").
+		Where("id = ? AND user_id = ?", orderID, userID).
+		First(&order).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
 		return
+	}
+
+	address := models.AddressResponse{
+		Label: order.Address.Label,
+		Phone: order.Address.Phone,
+		Street: order.Address.Street,
+		RecipientName: order.Address.RecipientName,
 	}
 
 	response := models.OrderResponse{
@@ -74,6 +85,7 @@ func GetOrderDetailHandler(c *gin.Context) {
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
+		Address: address,
 		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
@@ -84,6 +96,7 @@ func GetOrderDetailHandler(c *gin.Context) {
 			Price: item.Product.Price,
 			Description: item.Product.Description,
 			Stock: item.Product.Stock,
+			ImageURL: item.Product.ImageURL,
 		}
 
 		response.Items = append(response.Items, models.OrderItemResponse{

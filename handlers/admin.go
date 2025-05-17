@@ -21,7 +21,18 @@ func AdminListUsersHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Users not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"users": users})
+
+	response := []models.UserResponse{}
+	for _, user := range users {
+		response = append(response, models.UserResponse{
+			ID: user.ID,
+			Name: user.Name,
+			Username: user.Username,
+			Email: user.Email,
+			Role: user.Role,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"users": response})
 }
 
 func AdminGetUserHandler(c *gin.Context) {
@@ -32,23 +43,40 @@ func AdminGetUserHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"user": user})
+
+	response := models.UserResponse{
+		ID: user.ID,
+		Name: user.Name,
+		Username: user.Username,
+		Email: user.Email,
+		Role: user.Role,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": response})
 }
 
 func AdminUpdateUserHandler(c *gin.Context) {
-	var req models.User
-	if err := c.ShouldBindJSON(&req); err!= nil {
+	id := c.Param("id")
+	var user models.User
+	if err := db.DB.First(&user, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	var payload struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	id := c.Param("id")
-	if err := db.DB.Where("id =?", id).Updates(&req).Error; err!= nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update user"})
-		return
-	}
+	user.Name = payload.Name
+	user.Email = payload.Email
+	db.DB.Save(&user)
 
-	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully", "user": req})
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
 func AdminDeleteUserHandler(c *gin.Context) {
@@ -95,13 +123,21 @@ func AdminListOrdersHandler(c *gin.Context) {
 
 	responses := []models.AdminOrderResponse{}
 	for _, order := range orders {
+		user := models.UserResponse{
+			ID: order.User.ID,
+			Name: order.User.Name,
+			Username: order.User.Username,
+			Email: order.User.Email,
+			Role: order.User.Role,
+		}
+
 		orderResponse := models.AdminOrderResponse{
 			ID: order.ID,
 			OrderNum: order.OrderNum,
 			Status: order.Status,
 			Total: order.Total,
 			CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
-			User: order.User,
+			User: user,
 		}
 
 		for _, item := range order.Items {
@@ -128,9 +164,29 @@ func AdminListOrdersHandler(c *gin.Context) {
 func AdminGetOrder(c *gin.Context) {
 	id := c.Param("id")
 	var order models.Order
-	if err := db.DB.Preload("User").Preload("Items.Product").First(&order, id).Error; err != nil {
+	if err := db.DB.
+		Preload("Address").
+		Preload("User").
+		Preload("Items.Product").
+		First(&order, id).
+		Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
 		return
+	}
+
+	address := models.AddressResponse{
+		Label: order.Address.Label,
+		Phone: order.Address.Phone,
+		Street: order.Address.Street,
+		RecipientName: order.Address.RecipientName,
+	}
+
+	user := models.UserResponse{
+		ID: order.User.ID,
+		Name: order.User.Name,
+		Username: order.User.Username,
+		Email: order.User.Email,
+		Role: order.User.Role,
 	}
 
 	orderResponse := models.AdminOrderResponse{
@@ -138,8 +194,9 @@ func AdminGetOrder(c *gin.Context) {
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
+		Address: address,
 		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
-		User: order.User,
+		User: user,
 	}
 
 	for _, item := range order.Items {
@@ -149,6 +206,7 @@ func AdminGetOrder(c *gin.Context) {
 			Price: item.Product.Price,
 			Description: item.Product.Description,
 			Stock: item.Product.Stock,
+			ImageURL: item.Product.ImageURL,
 		}
 
 		orderResponse.Items = append(orderResponse.Items, models.OrderItemResponse{
@@ -189,13 +247,20 @@ func AdminUpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
+	user := models.UserResponse{
+		Name: order.User.Name,
+		Username: order.User.Username,
+		Email: order.User.Email,
+		Role: order.User.Role,
+	}
+
 	orderResponse := models.AdminOrderResponse{
 		ID: order.ID,
 		OrderNum: order.OrderNum,
 		Status: order.Status,
 		Total: order.Total,
 		CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
-		User: order.User,
+		User: user,
 	}
 
 	for _, item := range order.Items {

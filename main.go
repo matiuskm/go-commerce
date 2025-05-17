@@ -16,9 +16,7 @@ import (
 )
 
 func main() {
-	if env := os.Getenv("ENV"); env != "" && env == "development" {
-		config.LoadEnv()
-	}
+	config.LoadEnv()
 
 	db.Init()
 
@@ -62,6 +60,10 @@ func main() {
 		auth.DELETE("/my/cart/:productID", handlers.RemoveCartItemHandler)
 		auth.GET("/my/orders", handlers.GetOrderHistoryHandler)
 		auth.GET("my/orders/:id", handlers.GetOrderDetailHandler)
+		auth.GET("/my/addresses", handlers.ListAddresses)
+		auth.POST("/my/addresses", handlers.CreateAddress)
+		auth.PUT("/my/addresses/:id", handlers.UpdateAddress)
+		auth.DELETE("/my/addresses/:id", handlers.DeleteAddress)
 		auth.POST("/checkout", handlers.CheckoutHandler)
 
 		// Admin routes

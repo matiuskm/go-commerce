@@ -10,6 +10,10 @@ import (
 	"github.com/matiuskm/go-commerce/models"
 )
 
+type CheckoutPayload struct {
+    AddressID *uint `json:"addressId"` // harus dikirim dari FE
+}
+
 func CheckoutHandler(c *gin.Context) {
 	userIDAny, exists := c.Get("user_id")
 	if (!exists) {
@@ -17,6 +21,20 @@ func CheckoutHandler(c *gin.Context) {
 		return
 	}
 	userID := userIDAny.(uint)
+
+	var pay CheckoutPayload
+    if err := c.ShouldBindJSON(&pay); err != nil || pay.AddressID == nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "addressId is required"})
+        return
+    }
+
+	var ship models.Address
+    if err := db.DB.
+        Where("id = ? AND user_id = ?", *pay.AddressID, userID).
+        First(&ship).Error; err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid address"})
+        return
+    }
 
 	var cart models.Cart
 	if err := db.DB.Preload("Items.Product").Where("user_id = ?", userID).First(&cart).Error; err != nil {
@@ -61,6 +79,7 @@ func CheckoutHandler(c *gin.Context) {
 		UserID: userID,
 		Total: total,
 		Items: orderItems,
+		AddressID: pay.AddressID,
 	}
 
 	if err := tx.Create(&order).Error; err!= nil {

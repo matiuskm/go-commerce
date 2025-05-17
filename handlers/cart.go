@@ -80,6 +80,7 @@ func GetSavedCartHandler(c *gin.Context) {
 			Price: item.Product.Price,
 			Description: item.Product.Description,
 			Stock: item.Product.Stock,
+			ImageURL: item.Product.ImageURL,
 		}
 		response.Items = append(response.Items, models.CartItemResponse{
 			Product:   simpleProduct,
