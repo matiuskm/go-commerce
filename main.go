@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/matiuskm/go-commerce/config"
 	"github.com/matiuskm/go-commerce/db"
 
 	"github.com/matiuskm/go-commerce/handlers"
@@ -16,7 +15,7 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
+	// config.LoadEnv()
 
 	db.Init()
 
