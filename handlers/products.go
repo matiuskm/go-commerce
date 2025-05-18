@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/matiuskm/go-commerce/db"
@@ -9,18 +10,36 @@ import (
 )
 
 func GetAllProductsHandler(c *gin.Context) {
-	var products []models.Product
-	if err := db.DB.Order("ID asc").Find(&products).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch products"})
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+	var prods []models.Product
+	if err := db.DB.Order("id asc").Offset(offset).Limit(limit).Find(&prods).Error; err != nil {
+		c.JSON(500, gin.H{"error": "db error"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"products": products})
+
+	var total int64
+	db.DB.Model(&models.Product{}).Count(&total)
+	hasMore := int64(offset+limit) < total
+
+	c.JSON(200, gin.H{
+		"products": prods,
+		"hasMore":  hasMore,
+	})
 }
 
 func GetProductByIDHandler(c *gin.Context) {
 	id := c.Param("id")
 	var product models.Product
-	if err := db.DB.First(&product, id).Error; err!= nil {
+	if err := db.DB.First(&product, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
