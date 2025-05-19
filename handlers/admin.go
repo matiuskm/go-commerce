@@ -323,18 +323,21 @@ func AdminCreateProductHandler(c *gin.Context) {
 }
 
 func AdminUpdateProductHandler(c *gin.Context) {
-	var req models.Product
+	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err!= nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	id := c.Param("id")
-	if err := db.DB.Where("id = ?", id).Updates(&req).Error; err!= nil {
+	if err := db.DB.Model(&models.Product{}).Where("id = ?", id).Updates(req).Error; err!= nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update product"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully", "product": req})
+	var updated models.Product
+	db.DB.First(&updated, id)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully", "product": updated})
 }
 
 func AdminDeleteProductHandler(c *gin.Context) {
