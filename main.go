@@ -47,6 +47,8 @@ func main() {
 	r.GET("/products", handlers.GetAllProductsHandler)
 	r.GET("/products/:id", handlers.GetProductByIDHandler)
 
+	r.POST("/webhooks/xendit", handlers.XenditWebhookHandler)
+
 	// Protected routes
 	auth := r.Group("/")
 	auth.Use(middlewares.AuthMiddleware())
