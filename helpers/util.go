@@ -10,6 +10,7 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/resend/resend-go/v2"
 )
 
 var letters = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -47,4 +48,22 @@ func UploadToCloudinary(file multipart.File, filename string) (string, error) {
     }
 
     return uploadRes.SecureURL, nil
+}
+
+func SendEmail(to string, subject string, body string) error {
+    client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
+
+	params := &resend.SendEmailRequest{
+        From:    "GoCommerce <no-reply@arunikadigital.com>",
+        To:      []string{},
+        Html:    body,
+        Subject: subject,
+    }
+
+	sent, err := client.Emails.Send(params)
+	if err!= nil {
+		return err
+	}
+	fmt.Println(sent)
+    return nil
 }

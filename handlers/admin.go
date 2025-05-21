@@ -283,7 +283,7 @@ func AdminUpdateOrderStatus(c *gin.Context) {
 
 func AdminListProductHandler(c *gin.Context) {
 	var products []models.Product
-	if err := db.DB.Order("ID asc").Find(&products).Error; err != nil {
+	if err := db.DB.Unscoped().Order("ID asc").Find(&products).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Products not found"})
 		return
 	}

@@ -15,6 +15,13 @@ type CheckoutPayload struct {
     AddressID *uint `json:"addressId"` // harus dikirim dari FE
 }
 
+type EmailOrderRow struct {
+    Name     string
+    Qty      int
+    Price    int
+    Subtotal int
+}
+
 func CheckoutHandler(c *gin.Context) {
 	userIDAny, exists := c.Get("user_id")
 	if (!exists) {
@@ -51,6 +58,7 @@ func CheckoutHandler(c *gin.Context) {
 
 	var total int
 	var orderItems []models.OrderItem
+	var emailRows []EmailOrderRow
 
 	tx := db.DB.Begin()
 
@@ -59,7 +67,7 @@ func CheckoutHandler(c *gin.Context) {
 
 		if product.Stock < item.Qty {
 			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Insufficient stock for product %s", product.Name)})
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Stok %s tidak mencukupi", product.Name)})
 			return
 		}
 
@@ -78,6 +86,13 @@ func CheckoutHandler(c *gin.Context) {
 		})
 
 		total += product.Price * item.Qty
+
+		emailRows = append(emailRows, EmailOrderRow{
+			Name:     product.Name,
+			Qty:      item.Qty,
+			Price:    product.Price,
+			Subtotal: product.Price * item.Qty,
+		})
 	}
 
 	// save order
@@ -112,6 +127,30 @@ func CheckoutHandler(c *gin.Context) {
 	}
 	
 	tx.Commit()
+
+	// compose email body
+	emailBody := fmt.Sprintf(`
+		<p>Ada order baru di GoCommerce!</p>
+		<p>Pemesan: %s</p>
+		<p>Pesanan:</p>
+		<ul style="list-style-type: none">
+			%s
+		</ul>
+		<p>Pembayaran: Rp %d</p>
+		<p>Terima kasih!</p>
+	`,user.Name, func() string {
+		var rows string
+		for _, item := range emailRows {
+			rows += fmt.Sprintf(`
+				<li>
+					<strong>%s</strong> x %d
+				</li>
+			`, item.Name, item.Qty)
+		}
+		return rows
+	}(), order.Total)
+
+	helpers.SendEmail("jessica.leiwakabessy@gmail.com", "Order Baru", emailBody)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Checkout success", "order": order.OrderNum, "paymentUrl": order.XenditUrl})
 }
