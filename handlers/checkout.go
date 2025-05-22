@@ -96,7 +96,7 @@ func CheckoutHandler(c *gin.Context) {
 		})
 	}
 
-	adminFee := int(helpers.CalculateAdminFee(pay.PaymentMethod, int64(total)))
+	adminFee := int(helpers.CalculateAdminFee(pay.PaymentMethod, total))
 	finalTotal := total + adminFee
 
 	// save order
@@ -122,7 +122,6 @@ func CheckoutHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice"})
 		return
 	}
-	log.Println("✅ CreateXenditInvoice succeeded, invoice URL:", order.XenditUrl)
 	
 	// clear cart
 	if err := tx.Unscoped().Delete(&cart).Error; err!= nil {

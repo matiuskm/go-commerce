@@ -31,51 +31,56 @@ func GenerateOrderNumber() string {
 }
 
 func UploadToCloudinary(file multipart.File, filename string) (string, error) {
-    cld, err := cloudinary.NewFromParams(
-        os.Getenv("CLOUDINARY_CLOUD_NAME"),
-        os.Getenv("CLOUDINARY_API_KEY"),
-        os.Getenv("CLOUDINARY_API_SECRET"),
-    )
-    if err != nil {
-        return "", err
-    }
+	cld, err := cloudinary.NewFromParams(
+		os.Getenv("CLOUDINARY_CLOUD_NAME"),
+		os.Getenv("CLOUDINARY_API_KEY"),
+		os.Getenv("CLOUDINARY_API_SECRET"),
+	)
+	if err != nil {
+		return "", err
+	}
 
-    uploadRes, err := cld.Upload.Upload(context.Background(), file, uploader.UploadParams{
-        PublicID: "product_" + filename,
-        Folder:   "go-commerce",
-    })
-    if err != nil {
-        return "", err
-    }
+	uploadRes, err := cld.Upload.Upload(context.Background(), file, uploader.UploadParams{
+		PublicID: "product_" + filename,
+		Folder:   "go-commerce",
+	})
+	if err != nil {
+		return "", err
+	}
 
-    return uploadRes.SecureURL, nil
+	return uploadRes.SecureURL, nil
 }
 
-func CalculateAdminFee(method string, subtotal int64) int64 {
-    switch method {
-    case "VA":
-        return 4440
-    case "QRIS":
-        return int64(math.Ceil(float64(subtotal) * 0.007))
-    default:
-        return 0
-    }
+func CalculateAdminFee(method string, subtotal int) int {
+	var adminFee int
+
+	switch method {
+		case "VA":
+			adminFee = 4440
+		case "QRIS":
+			finalTotal := int(math.Ceil(float64(subtotal) / (1 - 0.007)))
+			adminFee = finalTotal - subtotal
+		default:
+			adminFee = 0
+	}
+
+	return adminFee
 }
 
 func SendEmail(to string, subject string, body string) error {
-    client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
+	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 
 	params := &resend.SendEmailRequest{
-        From:    "GoCommerce <no-reply@arunikadigital.com>",
-        To:      []string{},
-        Html:    body,
-        Subject: subject,
-    }
+		From:    "GoCommerce <no-reply@arunikadigital.com>",
+		To:      []string{},
+		Html:    body,
+		Subject: subject,
+	}
 
 	sent, err := client.Emails.Send(params)
-	if err!= nil {
+	if err != nil {
 		return err
 	}
 	fmt.Println(sent)
-    return nil
+	return nil
 }

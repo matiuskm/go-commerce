@@ -53,8 +53,6 @@ func CreateXenditInvoice(tx *gorm.DB, order *models.Order, customerEmail string,
 
 		return fmt.Errorf("xendit.CreateInvoice: %w", err)
 	}
-	log.Println(*resp.Id)
-	log.Println(resp.InvoiceUrl)
 	if resp.Id != nil {
 		log.Println("Set XenditInvoice")
         order.XenditInvoice = *resp.Id
