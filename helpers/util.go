@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"mime/multipart"
 	"os"
@@ -48,6 +49,17 @@ func UploadToCloudinary(file multipart.File, filename string) (string, error) {
     }
 
     return uploadRes.SecureURL, nil
+}
+
+func CalculateAdminFee(method string, subtotal int64) int64 {
+    switch method {
+    case "VA":
+        return 4440
+    case "QRIS":
+        return int64(math.Ceil(float64(subtotal) * 0.007))
+    default:
+        return 0
+    }
 }
 
 func SendEmail(to string, subject string, body string) error {

@@ -14,6 +14,9 @@ type Order struct {
 	Total     		int     			`gorm:"not null" json:"total"`
 	XenditInvoice	string				`json:"xenditInvoice"`
 	XenditUrl		string				`json:"xenditUrl"`
+	AdminFee		int					`json:"adminFee"`
+	PaymentMethod	string				`json:"paymentMethod"`
+	Subtotal		int					`json:"subtotal"`
 }
 
 type OrderResponse struct {
@@ -24,6 +27,9 @@ type OrderResponse struct {
 	Total     		int     			`json:"total"`
 	Address	  		AddressResponse		`json:"address"`
 	CreatedAt 		string				`json:"createdAt"`
+	AdminFee		int					`json:"adminFee"`
+	PaymentMethod	string				`json:"paymentMethod"`
+	Subtotal		int					`json:"subtotal"`
 }
 
 type AdminOrderResponse struct {
@@ -37,4 +43,7 @@ type AdminOrderResponse struct {
 	CreatedAt 		string				`json:"createdAt"`
 	XenditInvoice	string				`json:"xenditInvoice"`
 	XenditUrl		string				`json:"xenditUrl"`
+	AdminFee		int					`json:"adminFee"`
+	PaymentMethod	string				`json:"paymentMethod"`
+	Subtotal		int					`json:"subtotal"`
 }	

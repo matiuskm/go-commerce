@@ -13,10 +13,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateXenditInvoice(tx *gorm.DB, order *models.Order, customerEmail string) error {
+
+
+func CreateXenditInvoice(tx *gorm.DB, order *models.Order, customerEmail string, paymentMethod string) error {
 	log.Println("Creating Xendit Invoice")
 	log.Printf("▶️  CreateXenditInvoice for OrderNum=%s, Amount=%d\n",
         order.OrderNum, order.Total)
+
+	var xenditPaymentMethods []string
+	if paymentMethod == "QRIS" {
+		xenditPaymentMethods = []string{"QRIS"}
+	} else {
+		xenditPaymentMethods = []string{"BRI", "BNI", "MANDIRI", "PERMATA"}
+	}
+
 	createInvoiceRequest := *invoice.NewCreateInvoiceRequest(order.OrderNum, float64(order.Total))
 	createInvoiceRequest.SetCurrency("IDR")
 	customer := invoice.NewCustomerObject()
@@ -25,7 +35,7 @@ func CreateXenditInvoice(tx *gorm.DB, order *models.Order, customerEmail string)
 	createInvoiceRequest.SetDescription(fmt.Sprintf("Order %s payment", order.OrderNum))
 	createInvoiceRequest.SetSuccessRedirectUrl(fmt.Sprintf("%s?external_id=%s",os.Getenv("XENDIT_SUCCESS_URL"), order.OrderNum))
 	createInvoiceRequest.SetFailureRedirectUrl(os.Getenv("XENDIT_FAILURE_URL"))
-	createInvoiceRequest.SetPaymentMethods([]string{"BRI", "BNI", "MANDIRI", "PERMATA", "QRIS"})
+	createInvoiceRequest.SetPaymentMethods(xenditPaymentMethods)
 
 	client := xendit.NewClient(os.Getenv("XENDIT_SECRET_KEY"))
 

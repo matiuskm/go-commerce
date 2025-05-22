@@ -12,7 +12,8 @@ import (
 )
 
 type CheckoutPayload struct {
-    AddressID *uint `json:"addressId"` // harus dikirim dari FE
+    AddressID 		*uint 	`json:"addressId"`
+	PaymentMethod 	string 	`json:"paymentMethod"`
 }
 
 type EmailOrderRow struct {
@@ -95,13 +96,18 @@ func CheckoutHandler(c *gin.Context) {
 		})
 	}
 
+	adminFee := int(helpers.CalculateAdminFee(pay.PaymentMethod, int64(total)))
+	finalTotal := total + adminFee
+
 	// save order
 	order := models.Order{
 		OrderNum: helpers.GenerateOrderNumber(),
 		UserID: userID,
-		Total: total,
+		Total: finalTotal,
 		Items: orderItems,
 		AddressID: pay.AddressID,
+		PaymentMethod: pay.PaymentMethod,
+		AdminFee: adminFee,
 	}
 
 	if err := tx.Create(&order).Error; err!= nil {
@@ -110,7 +116,7 @@ func CheckoutHandler(c *gin.Context) {
 		return
 	}
 	
-	if err := helpers.CreateXenditInvoice(tx, &order, user.Email); err!= nil {
+	if err := helpers.CreateXenditInvoice(tx, &order, user.Email, pay.PaymentMethod); err!= nil {
 		log.Printf("❌ CreateXenditInvoice failed: %v\n", err)
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice"})
