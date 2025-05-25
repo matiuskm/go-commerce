@@ -41,7 +41,6 @@ func main() {
 	r.Static("/uploads", "./uploads")
 
 	// Public routes
-	r.GET("/", handlers.HomeHandler)
 	r.POST("/auth/register", handlers.RegisterHandler)
 	r.POST("/auth/login", handlers.LoginHandler)
 
