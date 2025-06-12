@@ -2,11 +2,20 @@ package handlers
 
 import (
 	"net/http"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/gin-gonic/gin"
 	"github.com/matiuskm/go-commerce/db"
 	"github.com/matiuskm/go-commerce/helpers"
 	"github.com/matiuskm/go-commerce/models"
+)
+
+var (
+	// Allow 10 requests per minute, with a burst of 5.
+	loginLimiter    = rate.NewLimiter(rate.Every(6*time.Second), 5) // Equivalent to 10/min
+	registerLimiter = rate.NewLimiter(rate.Every(6*time.Second), 5) // Equivalent to 10/min
 )
 
 type LoginRequest struct {
@@ -26,8 +35,13 @@ type LoginResponse struct {
 }
 
 func RegisterHandler(c *gin.Context) {
+	if !registerLimiter.Allow() {
+		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many registration attempts. Please try again later."})
+		return
+	}
+
 	var req RegisterRequest
-	if err:= c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -60,8 +74,13 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
+	if !loginLimiter.Allow() {
+		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many login attempts. Please try again later."})
+		return
+	}
+
 	var req LoginRequest
-	if err:= c.ShouldBindJSON(&req); err!= nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
