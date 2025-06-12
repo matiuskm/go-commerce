@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/matiuskm/go-commerce/models"
 	"gorm.io/driver/postgres"
@@ -42,6 +43,14 @@ func Init() {
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
+	sqlDB, err := database.DB()
+	if err != nil {
+		log.Fatalf("Failed to get database instance: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(time.Minute)
 
 	DB = database
 	log.Println("Database connected and migrated")

@@ -52,6 +52,7 @@ func main() {
 	}))
 
 	r.Static("/uploads", "./uploads")
+	r.StaticFile("/robots.txt", "./robots.txt")
 
 	// Public routes
 	r.POST("/auth/register", handlers.RegisterHandler)
