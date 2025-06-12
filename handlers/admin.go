@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io" // Ensure io is imported
 	"net/http"
 	"strings"
 
@@ -322,22 +323,46 @@ func AdminCreateProductHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Product created successfully", "product": req})
 }
 
+type AdminProductUpdateRequest struct {
+	Name        *string  `json:"name"`
+	Price       *float64 `json:"price"`
+	Description *string  `json:"description"`
+	Stock       *int     `json:"stock"`
+}
+
 func AdminUpdateProductHandler(c *gin.Context) {
-	var req map[string]interface{}
-	if err := c.ShouldBindJSON(&req); err!= nil {
+	id := c.Param("id")
+	var product models.Product
+	if err := db.DB.First(&product, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	var req AdminProductUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	id := c.Param("id")
-	if err := db.DB.Model(&models.Product{}).Where("id = ?", id).Updates(req).Error; err!= nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update product"})
+
+	if req.Name != nil {
+		product.Name = *req.Name
+	}
+	if req.Price != nil {
+		product.Price = *req.Price
+	}
+	if req.Description != nil {
+		product.Description = *req.Description
+	}
+	if req.Stock != nil {
+		product.Stock = *req.Stock
+	}
+
+	if err := db.DB.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
 		return
 	}
 
-	var updated models.Product
-	db.DB.First(&updated, id)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully", "product": updated})
+	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully", "product": product})
 }
 
 func AdminDeleteProductHandler(c *gin.Context) {
@@ -350,32 +375,75 @@ func AdminDeleteProductHandler(c *gin.Context) {
 	c.JSON(http.StatusNoContent, gin.H{"message": "Product deleted successfully"})
 }
 
+const maxUploadSize = 5 * 1024 * 1024 // 5 MB
+var allowedMimeTypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+}
+
 func AdminUploadImageHandler(c *gin.Context) {
 	id := c.Param("id")
 
-	fileHeader, err := c.FormFile("image")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "image is required"})
-		return
-	}
-
-	file, _ := fileHeader.Open()
-	defer file.Close()
-
-	imageURL, err := helpers.UploadToCloudinary(file, uuid.New().String())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "upload failed"})
-		return
-	}
-
-	// update product image URL
+	// First, check if product exists to avoid unnecessary file processing
 	var product models.Product
 	if err := db.DB.First(&product, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
 	}
-	product.ImageURL = imageURL
-	db.DB.Save(&product)
 
-	c.JSON(http.StatusOK, gin.H{"message": "image uploaded", "image_url": imageURL})
+	fileHeader, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "image field is required"})
+		return
+	}
+
+	// Validate file size
+	if fileHeader.Size > maxUploadSize {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File size exceeds limit of 5MB"})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open uploaded file"})
+		return
+	}
+	defer file.Close()
+
+	// Read header for content type detection
+	buffer := make([]byte, 512)
+	_, err = file.Read(buffer)
+	if err != nil && err != io.EOF { // Correctly check for io.EOF
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file for type detection"})
+		return
+	}
+
+	contentType := http.DetectContentType(buffer)
+	if !allowedMimeTypes[contentType] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type. Allowed types: JPEG, PNG, GIF."})
+		return
+	}
+
+	// Reset file pointer to the beginning as Read moved it
+	_, err = file.Seek(0, 0) // 0 means relative to start of file (io.SeekStart)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset file read pointer"})
+		return
+	}
+
+	imageURL, err := helpers.UploadToCloudinary(file, uuid.New().String())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image to Cloudinary"})
+		return
+	}
+
+	// Update product image URL
+	product.ImageURL = imageURL
+	if err := db.DB.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product image URL"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully", "image_url": imageURL})
 }

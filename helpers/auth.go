@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -9,7 +10,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+var jwtSecret = getAndValidateJWTSecret()
+
+func getAndValidateJWTSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Fatalf("FATAL: JWT_SECRET environment variable is not set.")
+	}
+	if len(secret) < 32 {
+		log.Fatalf("FATAL: JWT_SECRET must be at least 32 characters long. Current length: %d", len(secret))
+	}
+	return []byte(secret)
+}
 
 type JWTClaims struct {
 	UserID   uint   `json:"user_id"`
