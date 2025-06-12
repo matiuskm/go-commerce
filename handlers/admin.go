@@ -348,7 +348,7 @@ func AdminUpdateProductHandler(c *gin.Context) {
 		product.Name = *req.Name
 	}
 	if req.Price != nil {
-		product.Price = *req.Price
+		product.Price = int(*req.Price)
 	}
 	if req.Description != nil {
 		product.Description = *req.Description
