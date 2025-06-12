@@ -33,7 +33,15 @@ func main() {
 
 	db.Init()
 
-	r := gin.Default()
+	r := gin.New()
+
+	// Logging middleware
+	r.Use(gin.Logger())
+
+	// Recovery middleware
+	r.Use(gin.Recovery())
+
+	// Custom security headers middleware
 	r.Use(SecurityHeadersMiddleware())
 
 	// set cors
@@ -53,6 +61,12 @@ func main() {
 		AllowCredentials: true,
 		MaxAge: 12 * time.Hour,
 	}))
+
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		log.Printf("[%s] %s - %d - %v", c.Request.Method, c.Request.URL.Path, c.Writer.Status(), time.Since(start))
+	})
 
 	r.Static("/uploads", "./uploads")
 	r.StaticFile("/robots.txt", "./robots.txt")
@@ -110,5 +124,17 @@ func main() {
  
 	log.Println("Server started on :8080")
 	port := os.Getenv("PORT")
-	http.ListenAndServe(":"+port, r)
+	// http.ListenAndServe(":"+port, r)
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	
+	log.Println("Server started on :" + port)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server error: %v", err)
+	}
 }
