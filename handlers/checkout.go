@@ -155,7 +155,7 @@ func CheckoutHandler(c *gin.Context) {
 		return rows
 	}(), order.Total)
 
-	helpers.SendEmail("jessica.leiwakabessy@gmail.com", "Order Baru", emailBody)
+	helpers.SendEmail([]string{"jessica.leiwakabessy@gmail.com", "matius.km@gmail.com"}, "Order Baru", emailBody)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Checkout success", "order": order.OrderNum, "paymentUrl": order.XenditUrl})
 }

@@ -67,12 +67,12 @@ func CalculateAdminFee(method string, subtotal int) int {
 	return adminFee
 }
 
-func SendEmail(to string, subject string, body string) error {
+func SendEmail(to []string, subject string, body string) error {
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 
 	params := &resend.SendEmailRequest{
 		From:    "GoCommerce <no-reply@arunikadigital.com>",
-		To:      []string{},
+		To:      to,
 		Html:    body,
 		Subject: subject,
 	}
